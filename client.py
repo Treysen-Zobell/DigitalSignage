@@ -2,8 +2,7 @@
 import socket
 import time
 
-SERVER_KEY = 'server-0001'
-DEVICE_ID = 'device-0001'
+DEVICE_ID = 'client-0001'
 
 
 class Client:
@@ -42,8 +41,17 @@ while True:
         print(wait_response)
         break
 
-client.send(('%s REQUEST data;' % DEVICE_ID).encode('UTF-8'))
-client.send('GIVE ME DATA;'.encode('UTF-8'))
+client.send('REQUEST name;'.encode('UTF-8'))
+name = client.recv(1024).decode('UTF-8')
+print(name)
+
+client.send('REQUEST media_extension;'.encode('UTF-8'))
+media_extension = client.recv(1024).decode('UTF-8')
+print(media_extension)
+
+client.send('REQUEST media_last_update;'.encode('UTF-8'))
+media_last_update = client.recv(1024).decode('UTF-8')
+print(media_last_update)
 
 client.detach()
 client.close()

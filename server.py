@@ -1,22 +1,20 @@
 
 import threading
 import socket
-import time
+import json
+import os
 
 
-class Client:
-    def __init__(self):
-        self.id = ''
-        self.name = ''
-        self.location = ''
-        self.timetable = []
-        self.media_name = ''
-        self.media_extension = ''
-        self.media_last_update = ''
+clients = {}
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'clients.json')) as json_file:
+    json_data = json.load(json_file)
+    for client in json_data:
+        print('%s HAS %s' % (client, str(json_data[client])))
+        clients[client] = json_data[client]
 
-        self.online = False
-        self.ip = ''
-
+media_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Media')
+media = [f for f in os.listdir(media_path) if os.path.isfile(os.path.join(media_path, f))]
+print(media)
 
 client_threads = {}  # type is (client, client_thread)
 tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,16 +42,6 @@ class DataIn(threading.Thread):
             client_thread.start()
 
 
-class DataOut(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-
-    def run(self):
-        while True:
-            print('data_buffer = %s' % str(data_buffer))
-            time.sleep(1)
-
-
 class ClientThread(threading.Thread):
     def __init__(self, connection, ip, port):
         print('[+] New Server Socket Thread Started For %s : %s' % (ip, str(port)))
@@ -66,6 +54,9 @@ class ClientThread(threading.Thread):
         self.connection.send('REQUEST:ID'.encode('UTF-8'))
         self.id = connection.recv(1024).decode('UTF-8')
         connection.send('RECEIVED'.encode('UTF-8'))
+
+        global clients
+        self.client = clients[self.id]
 
     def run(self):
         try:
@@ -82,10 +73,19 @@ class ClientThread(threading.Thread):
             global client_threads
             del client_threads[self.id]
         print('[-] Server Socket Thread Terminated For %s : %s' % (self.ip, str(self.port)))
-        print('data_buffer = %s' % str(data_buffer))
 
     def execute(self, command):
         print('%s executes %s' % (self.id, command))
+        if command[:12] == 'UPDATE MEDIA':
+            global media, media_path
+            media = [f for f in os.listdir(media_path) if os.path.isfile(os.path.join(media_path, f))]
+            print(media)
+        if command[:13] == 'REQUEST MEDIA':
+            self.connection.send(('media IS %s' % str(media)).encode('UTF-8'))
+        elif command[:7] == 'REQUEST':
+            request = command[8:]
+            self.connection.send(('%s IS %s' % (request, self.client[request])).encode('UTF-8'))
+            print('%s IS %s' % (request, self.client[request]))
 
 
 class CommandParser(threading.Thread):
@@ -106,9 +106,6 @@ class CommandParser(threading.Thread):
 
 data_in_thread = DataIn()
 data_in_thread.start()
-
-data_out_thread = DataOut()
-data_out_thread.start()
 
 command_parser = CommandParser()
 command_parser.start()
