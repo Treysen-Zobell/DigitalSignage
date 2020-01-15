@@ -41,7 +41,7 @@ while True:
         print(wait_response)
         break
 
-# REQUEST TYPE - DATA TYPE - DATA SOURCE - DATA NAME - DATA DESTINATION
+# REQUEST TYPE - DATA DESTINATION - DATA NAME - DATA SOURCE
 client.send('REQUEST client-0001 name client-0001;'.encode('UTF-8'))
 print(client.recv(1024).decode('UTF-8'))
 client.send('REQUEST client-0001 media_extension client-0001;'.encode('UTF-8'))
