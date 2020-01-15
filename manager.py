@@ -36,38 +36,39 @@ while True:
 
 while True:
     data = client.recv(1024).decode('UTF-8')
-    if 'REQUEST:ID' in data:
+    if 'REQUEST id' in data:
         client.send(DEVICE_ID.encode('UTF-8'))
         wait_response = client.recv(1024).decode('UTF-8')
         print(wait_response)
         break
 
-client.send('REQUEST name;'.encode('UTF-8'))
+client.send('REQUEST CLIENT name;'.encode('UTF-8'))
 name = client.recv(1024).decode('UTF-8')
 print(name)
 
-client.send('REQUEST media_extension;'.encode('UTF-8'))
+client.send('REQUEST CLIENT media_extension;'.encode('UTF-8'))
 media_extension = client.recv(1024).decode('UTF-8')
 print(media_extension)
 
-client.send('REQUEST media_last_update;'.encode('UTF-8'))
+client.send('REQUEST CLIENT media_last_update;'.encode('UTF-8'))
+media_last_update = client.recv(1024).decode('UTF-8')
+print(media_last_update)
+
+client.send('SET CLIENT client-0001 name TO name2;'.encode('UTF-8'))
 media_last_update = client.recv(1024).decode('UTF-8')
 print(media_last_update)
 
 # Tkinter Section
 
 def update_media():
-    client.send('UPDATE MEDIA;'.encode('UTF-8'))
+    client.send('COMMAND update media;'.encode('UTF-8'))
 
 def get_media():
-    client.send('REQUEST MEDIA;'.encode('UTF-8'))
-    media = client.recv(1024).decode('UTF-8')[10:-1].split(', ')
+    client.send('REQUEST media list;'.encode('UTF-8'))
+    data = client.recv(1024).decode('UTF-8')
+    media = data[10:-1].split(', ')
+    print('%s%s' % (data[:9], media))
     return media
-
-def show_media():
-    global media
-    media = get_media()
-    print(media)
 
 media = get_media()
 
@@ -96,7 +97,7 @@ def change_dropdown(*args):
 button = ttk.Button(mainframe, text='Update Media (Server)', command=update_media)
 button.grid(row = 3, column=1)
 
-button2 = ttk.Button(mainframe, text='Update Media (This Client)', command=show_media)
+button2 = ttk.Button(mainframe, text='Update Media (This Client)', command=get_media)
 button2.grid(row = 4, column=1)
 
 # link function to change dropdown

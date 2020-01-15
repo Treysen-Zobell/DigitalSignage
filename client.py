@@ -35,24 +35,28 @@ while True:
 
 while True:
     data = client.recv(1024).decode('UTF-8')
-    if 'REQUEST:ID' in data:
+    if 'REQUEST id' in data:
         client.send(DEVICE_ID.encode('UTF-8'))
         wait_response = client.recv(1024).decode('UTF-8')
         print(wait_response)
         break
 
-client.send('REQUEST name;'.encode('UTF-8'))
-name = client.recv(1024).decode('UTF-8')
-print(name)
+# REQUEST TYPE - DATA TYPE - DATA SOURCE - DATA NAME - DATA DESTINATION
+client.send('REQUEST client-0001 name client-0001;'.encode('UTF-8'))
+print(client.recv(1024).decode('UTF-8'))
+client.send('REQUEST client-0001 media_extension client-0001;'.encode('UTF-8'))
+print(client.recv(1024).decode('UTF-8'))
+client.send('REQUEST client-0001 media_last_update client-0001;'.encode('UTF-8'))
+print(client.recv(1024).decode('UTF-8'))
+client.send('REQUEST server-0001 media_files client-0001;'.encode('UTF-8'))
+print(client.recv(1024).decode('UTF-8'))
+client.send('SET server-0001 media_files [1, 0.001] client-0001;'.encode('UTF-8'))
+print(client.recv(1024).decode('UTF-8'))
+client.send('SET server-0001 file_path hello client-0001;'.encode('UTF-8'))
+print(client.recv(1024).decode('UTF-8'))
+client.send('UPDATE client-0001;'.encode('UTF-8'))
+print(client.recv(1024).decode('UTF-8'))
 
-client.send('REQUEST media_extension;'.encode('UTF-8'))
-media_extension = client.recv(1024).decode('UTF-8')
-print(media_extension)
-
-client.send('REQUEST media_last_update;'.encode('UTF-8'))
-media_last_update = client.recv(1024).decode('UTF-8')
-print(media_last_update)
-
+time.sleep(1000)
 client.detach()
 client.close()
-time.sleep(10)
