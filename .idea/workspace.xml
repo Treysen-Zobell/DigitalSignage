@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="9887a093-0e96-4555-8ad8-fb562e5fbb6d" name="Default Changelist" comment="" />
+    <list default="true" id="9887a093-0e96-4555-8ad8-fb562e5fbb6d" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/server.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -12,23 +16,23 @@
     <splitter split-orientation="horizontal" split-proportion="0.5">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/client.py">
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/clients.json">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="527">
-                  <caret line="43" column="59" selection-start-line="43" selection-start-column="59" selection-end-line="43" selection-end-column="59" />
-                  <folding>
-                    <element signature="e#1#14#0" expanded="true" />
-                  </folding>
+                <state relative-caret-position="102">
+                  <caret line="6" column="25" selection-start-line="6" selection-start-column="25" selection-end-line="6" selection-end-column="25" />
                 </state>
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/clients.json">
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/server.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="391">
-                  <caret line="23" column="1" lean-forward="true" selection-start-line="23" selection-start-column="1" selection-end-line="23" selection-end-column="1" />
+                <state relative-caret-position="510">
+                  <caret line="118" lean-forward="true" selection-start-line="118" selection-end-line="118" />
+                  <folding>
+                    <element signature="e#1#17#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -36,14 +40,14 @@
         </leaf>
       </split-first>
       <split-second>
-        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+        <leaf>
           <file pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/server.py">
+            <entry file="file://$PROJECT_DIR$/client.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="365">
-                  <caret line="74" lean-forward="true" selection-start-line="74" selection-end-line="74" />
+                <state relative-caret-position="297">
+                  <caret line="28" column="35" selection-start-line="28" selection-start-column="35" selection-end-line="28" selection-end-column="35" />
                   <folding>
-                    <element signature="e#1#17#0" expanded="true" />
+                    <element signature="e#1#14#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
@@ -67,10 +71,15 @@
       <find>Client</find>
       <find>print</find>
       <find>connection</find>
-      <find>data</find>
       <find>data_buffer</find>
       <find>self.file_path</find>
+      <find>'UTF-8'</find>
+      <find>.new</find>
+      <find>data</find>
     </findStrings>
+    <replaceStrings>
+      <replace />
+    </replaceStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -88,10 +97,10 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="5566" />
-    <option name="y" value="-14" />
-    <option name="width" value="1929" />
-    <option name="height" value="1044" />
+    <option name="x" value="2552" />
+    <option name="y" value="-8" />
+    <option name="width" value="2576" />
+    <option name="height" value="1416" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -99,6 +108,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -110,7 +120,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -197,14 +206,14 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="5112" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="2552" y="-8" width="2576" height="1416" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.12065332" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.120567374" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32969603" />
       <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49960598" weight="0.20342946" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
@@ -230,13 +239,6 @@
     <entry file="file://$PROJECT_DIR$/devices.json" />
     <entry file="file://$PROJECT_DIR$/server v2.py" />
     <entry file="file://$PROJECT_DIR$/network.py" />
-    <entry file="file://$PROJECT_DIR$/clients.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="391">
-          <caret line="23" column="1" lean-forward="true" selection-start-line="23" selection-start-column="1" selection-end-line="23" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/manager.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="578">
@@ -247,10 +249,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/clients.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="25" selection-start-line="6" selection-start-column="25" selection-end-line="6" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="365">
-          <caret line="74" lean-forward="true" selection-start-line="74" selection-end-line="74" />
+        <state relative-caret-position="510">
+          <caret line="118" lean-forward="true" selection-start-line="118" selection-end-line="118" />
           <folding>
             <element signature="e#1#17#0" expanded="true" />
           </folding>
@@ -259,8 +268,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/client.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="527">
-          <caret line="43" column="59" selection-start-line="43" selection-start-column="59" selection-end-line="43" selection-end-column="59" />
+        <state relative-caret-position="297">
+          <caret line="28" column="35" selection-start-line="28" selection-start-column="35" selection-end-line="28" selection-end-column="35" />
           <folding>
             <element signature="e#1#14#0" expanded="true" />
           </folding>

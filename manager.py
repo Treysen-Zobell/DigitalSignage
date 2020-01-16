@@ -35,37 +35,37 @@ while True:
         time.sleep(10)
 
 while True:
-    data = client.recv(1024).decode('UTF-8')
+    data = client.recv(1024).decode()
     if 'REQUEST id' in data:
-        client.send(DEVICE_ID.encode('UTF-8'))
-        wait_response = client.recv(1024).decode('UTF-8')
+        client.send(DEVICE_ID.encode())
+        wait_response = client.recv(1024).decode()
         print(wait_response)
         break
 
-client.send('REQUEST CLIENT name;'.encode('UTF-8'))
-name = client.recv(1024).decode('UTF-8')
+client.send('REQUEST CLIENT name;'.encode())
+name = client.recv(1024).decode()
 print(name)
 
-client.send('REQUEST CLIENT media_extension;'.encode('UTF-8'))
-media_extension = client.recv(1024).decode('UTF-8')
+client.send('REQUEST CLIENT media_extension;'.encode())
+media_extension = client.recv(1024).decode()
 print(media_extension)
 
-client.send('REQUEST CLIENT media_last_update;'.encode('UTF-8'))
-media_last_update = client.recv(1024).decode('UTF-8')
+client.send('REQUEST CLIENT media_last_update;'.encode())
+media_last_update = client.recv(1024).decode()
 print(media_last_update)
 
-client.send('SET CLIENT client-0001 name TO name2;'.encode('UTF-8'))
-media_last_update = client.recv(1024).decode('UTF-8')
+client.send('SET CLIENT client-0001 name TO name2;'.encode())
+media_last_update = client.recv(1024).decode()
 print(media_last_update)
 
 # Tkinter Section
 
 def update_media():
-    client.send('COMMAND update media;'.encode('UTF-8'))
+    client.send('COMMAND update media;'.encode())
 
 def get_media():
-    client.send('REQUEST media list;'.encode('UTF-8'))
-    data = client.recv(1024).decode('UTF-8')
+    client.send('REQUEST media list;'.encode())
+    data = client.recv(1024).decode()
     media = data[10:-1].split(', ')
     print('%s%s' % (data[:9], media))
     return media

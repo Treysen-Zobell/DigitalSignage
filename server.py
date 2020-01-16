@@ -36,7 +36,7 @@ class Data:
 
 
 class ClientThread(threading.Thread):
-    def __init__(self, connection, data):
+    def __init__(self, connection, data, is_self):
         print('[+] Starting Thread (%s:%s)' % connection.getsockname())
         threading.Thread.__init__(self)
 
@@ -46,12 +46,16 @@ class ClientThread(threading.Thread):
         self.running = True
         self.id = ''
 
-        self.connect()
+        if is_self:
+            self.id = ID
+            self.data.clients[self.id]['thread'] = self
+        else:
+            self.connect()
 
     def run(self):
         try:
             while self.running:
-                data_in = self.connection.recv(BUFFER).decode('UTF-8')
+                data_in = self.connection.recv(BUFFER).decode()
                 self.data.clients[self.id]['data_buffer'] += data_in
 
         except ConnectionResetError:
@@ -60,36 +64,24 @@ class ClientThread(threading.Thread):
         print('[-] Killing Thread (%s:%s)' % self.connection.getsockname())
 
     def connect(self):
-        self.connection.send('REQUEST id'.encode('UTF-8'))
-        self.id = self.connection.recv(BUFFER).decode('UTF-8')
+        self.connection.send('REQUEST id'.encode())
+        self.id = self.connection.recv(BUFFER).decode()
         if self.id in self.data.clients:
-            self.connection.send('ID VALID CONNECTION ACCEPTED'.encode('UTF-8'))
+            self.connection.send('ID VALID CONNECTION ACCEPTED'.encode())
             self.data.clients[self.id]['thread'] = self
         else:
-            self.connection.send('ID INVALID CONNECTION DENIED'.encode('UTF-8'))
+            self.connection.send('ID INVALID CONNECTION DENIED'.encode())
             self.running = False
 
     def execute(self, command):
-        print('command = "%s"' % command)
-        print('')
-
         if command[:7] == 'REQUEST':
-            print('command[:7] = "%s"' % command[:7])  # Base Command
-            print('command[8:19] = "%s"' % command[8:19])  # Source
-            print('command[20:-12] = "%s"' % command[20:-12])  # Data Name
-            print('command[-11:] = "%s"' % command[-11:])  # Destination
+            self.data.clients[command[-11:]]['thread'].connection.send(str(self.data.clients[command[8:19]][command[20:-12]]).encode())
 
-            self.data.clients[command[-11:]]['thread'].connection.send(str(self.data.clients[command[8:19]][command[20:-12]]).encode('UTF-8'))
         elif command[:3] == 'SET':
             destination = command[4:15]
             data_field = command[16:command[16:].find(' ')+16]
             data = command[command[16:].find(' ')+17:-12]
             origin = command[-11:]
-
-            print('command[:3] = "%s"' % command[:3])
-            print('command[4:15] = "%s"' % destination)
-            print('command[16:command[16:].find(' ')+16] = "%s"' % data_field)
-            print('command[-11:] = "%s"' % origin)
 
             # If Is List, Convert From Sting To List
             if data[0] == "[":
@@ -107,13 +99,26 @@ class ClientThread(threading.Thread):
                         data[i] = float(data[i])
 
             self.data.clients[destination][data_field] = data
-            self.data.clients[origin]['thread'].connection.send('DATA ALTERED'.encode('UTF-8'))
-
-            print('self.data.clients[destination][data_field] = %s' % self.data.clients[destination][data_field])
-            print()
+            self.data.clients[origin]['thread'].connection.send('DATA ALTERED'.encode())
 
         elif command[:6] == 'UPDATE':
-            self.data.clients[command[7:]]['thread'].connection.send('UPDATE'.encode('UTF-8'))
+            self.data.clients[command[7:18]]['thread'].connection.send('UPDATE'.encode())
+
+        elif command[:8] == 'TRANSFER':
+            if command[-14:-12] == 'TO':  # From Server To Client
+                file_path = command[9:-15]
+                if file_path[0] == '.':
+                    file_path = os.path.dirname(os.path.abspath(__file__)) + file_path
+
+                file_size = os.path.getsize(file_path)
+
+                self.data.clients[command[-11:]]['thread'].connection.send(str(file_size).encode())
+
+                binary_data = open(file_path, 'rb').read()
+                self.data.clients[command[-11:]]['thread'].connection.send(binary_data)
+
+            else:  # From Client To Server
+                print('[ERROR] Cannot Transfer File From Client To Server')
 
 
 class CommandParser(threading.Thread):
@@ -139,8 +144,10 @@ data_store = Data()
 command_parser = CommandParser(data_store)
 command_parser.start()
 
+server_thread = ClientThread(tcp_server, data_store, True)
+
 while True:
     tcp_server.listen(50)
     client_connection, (ip, port) = tcp_server.accept()
-    client_thread = ClientThread(client_connection, data_store)
+    client_thread = ClientThread(client_connection, data_store, False)
     client_thread.start()
