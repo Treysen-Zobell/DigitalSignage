@@ -74,51 +74,54 @@ class ClientThread(threading.Thread):
             self.running = False
 
     def execute(self, command):
-        if command[:7] == 'REQUEST':
-            self.data.clients[command[-11:]]['thread'].connection.send(str(self.data.clients[command[8:19]][command[20:-12]]).encode())
+        try:
+            if command[:7] == 'REQUEST':
+                self.data.clients[command[-11:]]['thread'].connection.send(str(self.data.clients[command[8:19]][command[20:-12]]).encode())
 
-        elif command[:3] == 'SET':
-            destination = command[4:15]
-            data_field = command[16:command[16:].find(' ')+16]
-            data = command[command[16:].find(' ')+17:-12]
-            origin = command[-11:]
+            elif command[:3] == 'SET':
+                destination = command[4:15]
+                data_field = command[16:command[16:].find(' ')+16]
+                data = command[command[16:].find(' ')+17:-12]
+                origin = command[-11:]
 
-            # If Is List, Convert From Sting To List
-            if data[0] == "[":
-                data = data[1:-1]
-                data = data.split(', ')
+                # If Is List, Convert From Sting To List
+                if data[0] == "[":
+                    data = data[1:-1]
+                    data = data.split(', ')
 
-            # Fix Variable Type
-            if data is list:
-                for i in range(len(data)):
-                    if data[i][0] == '"':
-                        data[i] = data[i][1:-1]
-                    elif data[i].lower() == "true" or data[i] == "false":
-                        data[i] = 'true' in data[i].lower()
-                    else:
-                        data[i] = float(data[i])
+                # Fix Variable Type
+                if data is list:
+                    for i in range(len(data)):
+                        if data[i][0] == '"':
+                            data[i] = data[i][1:-1]
+                        elif data[i].lower() == "true" or data[i] == "false":
+                            data[i] = 'true' in data[i].lower()
+                        else:
+                            data[i] = float(data[i])
 
-            self.data.clients[destination][data_field] = data
-            self.data.clients[origin]['thread'].connection.send('DATA ALTERED'.encode())
+                self.data.clients[destination][data_field] = data
+                self.data.clients[origin]['thread'].connection.send('DATA ALTERED'.encode())
 
-        elif command[:6] == 'UPDATE':
-            self.data.clients[command[7:18]]['thread'].connection.send('UPDATE'.encode())
+            elif command[:6] == 'UPDATE':
+                self.data.clients[command[7:18]]['thread'].connection.send('UPDATE'.encode())
 
-        elif command[:8] == 'TRANSFER':
-            if command[-14:-12] == 'TO':  # From Server To Client
-                file_path = command[9:-15]
-                if file_path[0] == '.':
-                    file_path = os.path.dirname(os.path.abspath(__file__)) + file_path
+            elif command[:8] == 'TRANSFER':
+                if command[-14:-12] == 'TO':  # From Server To Client
+                    file_path = command[9:-15]
+                    if file_path[0] == '.':
+                        file_path = os.path.dirname(os.path.abspath(__file__)) + file_path[1:]
 
-                file_size = os.path.getsize(file_path)
+                    file_size = os.path.getsize(file_path)
 
-                self.data.clients[command[-11:]]['thread'].connection.send(str(file_size).encode())
+                    self.data.clients[command[-11:]]['thread'].connection.send(str(file_size).encode())
 
-                binary_data = open(file_path, 'rb').read()
-                self.data.clients[command[-11:]]['thread'].connection.send(binary_data)
+                    binary_data = open(file_path, 'rb').read()
+                    self.data.clients[command[-11:]]['thread'].connection.send(binary_data)
 
-            else:  # From Client To Server
-                print('[ERROR] Cannot Transfer File From Client To Server')
+                else:  # From Client To Server
+                    print('[ERROR] Cannot Transfer File From Client To Server')
+        except socket.error as e:
+            print(e)
 
 
 class CommandParser(threading.Thread):

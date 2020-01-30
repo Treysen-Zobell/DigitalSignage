@@ -71,7 +71,7 @@ client.send('UPDATE client-0001;'.encode())
 print(client.recv(1024).decode())
 
 client.send('TRANSFER ./test.mp4 TO client-0001;'.encode())
-receive_file('new_test.mp4')
+receive_file('content.mp4')
 
 client.detach()
 client.close()
