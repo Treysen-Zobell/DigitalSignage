@@ -1,156 +1,160 @@
 
 import threading
 import socket
+import tqdm
 import json
 import os
 
-BUFFER = 1024
-ID = 'server-0001'
+MAX_CONNECTIONS = 50
 
 
-class Data:
-    def __init__(self):
-        self.clients = {}
-        self.clients = self.load_json_clients()
+class DataTransfer:
+    @staticmethod
+    def send_data(socket_connection, data):
+        data = data + ';'
+        socket_connection.send(data.encode())
 
     @staticmethod
-    def load_media_list():
-        media_files = [f for f in os.listdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Media'))
-                       if os.path.isfile(os.path.join(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Media'), f))]
-        return media_files
-
-    def save_json_clients(self, json_clients):
-        for json_client in json_clients:
-            json_clients[json_client]['thread'] = 'disconnected'
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'clients.json'), 'w+') as json_file:
-            json.dump(self.clients, json_file)
+    def send_next(socket_connection):
+        socket_connection.send('null;'.encode())
 
     @staticmethod
-    def load_json_clients():
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'clients.json')) as json_file:
-            json_data = json.load(json_file)
-            json_clients = {}
-            for client in json_data:
-                json_clients[client] = json_data[client]
-        return json_clients
+    def receive_data(socket_connection):
+        data = ''
+        while ';' not in data:
+            data += socket_connection.recv(1024).decode()
+        data = data[:-1]
+        return data
+
+    @staticmethod
+    def send_id(socket_connection, client_id):
+        DataTransfer.send_data(socket_connection, client_id)
+
+    @staticmethod
+    def request_id(socket_connection):
+        DataTransfer.send_data(socket_connection, 'request id')
+        client_id = DataTransfer.receive_data(socket_connection)
+        return client_id
+
+
+class FileTransfer:
+    @staticmethod
+    def transmit_file(socket_connection, filename):
+        DataTransfer.receive_data(socket_connection)
+        file_size = os.path.getsize(filename)
+        file_data = open(filename, 'rb').read()
+
+        # Transmit Data
+        DataTransfer.send_data(socket_connection, str(file_size))
+        socket_connection.recv(1024)
+        socket_connection.send(file_data)
+        socket_connection.recv(1024)
+
+    @staticmethod
+    def receive_file(socket_connection, filename):
+        DataTransfer.send_next(socket_connection)
+        file_size = int(DataTransfer.receive_data(socket_connection))
+        DataTransfer.send_next(socket_connection)
+
+        socket_connection.settimeout(5)
+        progress = tqdm.tqdm(range(file_size), 'Receiving File', unit='B', unit_scale=True, unit_divisor=1024)
+        with open(filename, 'wb') as file:
+            for _ in progress:
+                try:
+                    bytes_read = socket_connection.recv(4096)
+                except socket.timeout:
+                    break
+                if not bytes_read:
+                    break
+                file.write(bytes_read)
+                progress.update(len(bytes_read))
+        DataTransfer.send_next(socket_connection)
 
 
 class ClientThread(threading.Thread):
-    def __init__(self, connection, data, is_self):
-        print('[+] Starting Thread (%s:%s)' % connection.getsockname())
+    def __init__(self, client_connection, client_id, server_thread):
         threading.Thread.__init__(self)
-
-        self.connection = connection
-        self.data = data
-
-        self.running = True
-        self.id = ''
-
-        if is_self:
-            self.id = ID
-            self.data.clients[self.id]['thread'] = self
-        else:
-            self.connect()
+        self.connection = client_connection
+        self.client_id = client_id
+        self.server_thread = server_thread
+        self.should_update = True
+        self.media_name = self.server_thread.json_clients[self.client_id]['media_name']
 
     def run(self):
         try:
-            while self.running:
-                data_in = self.connection.recv(BUFFER).decode()
-                self.data.clients[self.id]['data_buffer'] += data_in
+            print('[+] Stating Client Thread For %s' % self.client_id)
+            while True:
+                request = DataTransfer.receive_data(self.connection)
+                fields = request.split(' ')
 
+                if fields[0] == 'get':
+                    if fields[1] in self.server_thread.clients:
+                        if fields[2] == 'should_update':
+                            if self.should_update:
+                                DataTransfer.send_data(self.server_thread.clients[fields[1]].connection, 'true')
+                            else:
+                                DataTransfer.send_data(self.server_thread.clients[fields[1]].connection, 'false')
+                        if fields[2] == 'media_name':
+                            DataTransfer.send_data(self.server_thread.clients[fields[1]].connection, self.server_thread.clients[fields[1]].media_name)
+                    elif fields[1] in self.server_thread.json_clients:
+                        DataTransfer.send_data(self.server_thread.json_clients[fields[1]][fields[2]])
+                        self.server_thread.json_clients[fields[1]][fields[2]] = fields[3]
+
+                if fields[0] == 'set':
+                    if fields[1] in self.server_thread.clients:
+                        if fields[2] == 'should_update':
+                            self.server_thread.clients[fields[1]].should_update = 'true' in fields[3].lower()
+                            DataTransfer.send_next(self.connection)
+                        if fields[2] == 'media_name':
+                            self.server_thread.clients[fields[1]].media_name = fields[3]
+                            DataTransfer.send_next(self.connection)
+                    if fields[1] in self.server_thread.json_clients:
+                        self.server_thread.json_clients[fields[1]][fields[2]] = fields[3]
+
+                if fields[0] == 'request':
+                    if fields[1] in self.server_thread.clients:
+                        if fields[2] == 'file':
+                            DataTransfer.send_next(self.connection)
+                            FileTransfer.transmit_file(self.connection, fields[3])
+
+                if fields[0] == 'command':
+                    if fields[1] == 'save':
+                        with open('clients.json', 'w') as json_file:
+                            json_file.write(json.dump(self.server_thread.clients))
+
+            print('[-] Killing Client Thread For %s' % self.client_id)
         except ConnectionResetError:
-            self.data.clients[self.id]['thread'] = 'disconnected'
-
-        print('[-] Killing Thread (%s:%s)' % self.connection.getsockname())
-
-    def connect(self):
-        self.connection.send('REQUEST id'.encode())
-        self.id = self.connection.recv(BUFFER).decode()
-        if self.id in self.data.clients:
-            self.connection.send('ID VALID CONNECTION ACCEPTED'.encode())
-            self.data.clients[self.id]['thread'] = self
-        else:
-            self.connection.send('ID INVALID CONNECTION DENIED'.encode())
-            self.running = False
-
-    def execute(self, command):
-        try:
-            if command[:7] == 'REQUEST':
-                self.data.clients[command[-11:]]['thread'].connection.send(str(self.data.clients[command[8:19]][command[20:-12]]).encode())
-
-            elif command[:3] == 'SET':
-                destination = command[4:15]
-                data_field = command[16:command[16:].find(' ')+16]
-                data = command[command[16:].find(' ')+17:-12]
-                origin = command[-11:]
-
-                # If Is List, Convert From Sting To List
-                if data[0] == "[":
-                    data = data[1:-1]
-                    data = data.split(', ')
-
-                # Fix Variable Type
-                if data is list:
-                    for i in range(len(data)):
-                        if data[i][0] == '"':
-                            data[i] = data[i][1:-1]
-                        elif data[i].lower() == "true" or data[i] == "false":
-                            data[i] = 'true' in data[i].lower()
-                        else:
-                            data[i] = float(data[i])
-
-                self.data.clients[destination][data_field] = data
-                self.data.clients[origin]['thread'].connection.send('DATA ALTERED'.encode())
-
-            elif command[:6] == 'UPDATE':
-                self.data.clients[command[7:18]]['thread'].connection.send('UPDATE'.encode())
-
-            elif command[:8] == 'TRANSFER':
-                if command[-14:-12] == 'TO':  # From Server To Client
-                    file_path = command[9:-15]
-                    if file_path[0] == '.':
-                        file_path = os.path.dirname(os.path.abspath(__file__)) + file_path[1:]
-
-                    file_size = os.path.getsize(file_path)
-
-                    self.data.clients[command[-11:]]['thread'].connection.send(str(file_size).encode())
-
-                    binary_data = open(file_path, 'rb').read()
-                    self.data.clients[command[-11:]]['thread'].connection.send(binary_data)
-
-                else:  # From Client To Server
-                    print('[ERROR] Cannot Transfer File From Client To Server')
-        except socket.error as e:
-            print(e)
+            print('[-] Client Closed Unexpectedly %s' % self.client_id)
 
 
-class CommandParser(threading.Thread):
-    def __init__(self, data):
+class ServerThread(threading.Thread):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self.data = data
+        self.listen_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listen_connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.listen_connection.bind(('', 12345))
+        self.listen_connection.listen(MAX_CONNECTIONS)
+        self.clients = {}
+
+        with open('clients.json', 'r') as json_file:
+            self.json_clients = json.load(json_file)
 
     def run(self):
         while True:
-            for client in self.data.clients:
-                command_buffer = self.data.clients[client]['data_buffer']
-                if ';' in command_buffer:
-                    command = command_buffer[:command_buffer.find(';')]
-                    self.data.clients[client]['data_buffer'] = command_buffer[command_buffer.find(';')+1:]
-                    self.data.clients[client]['thread'].execute(command)
+            client_connection, (ip, port) = self.listen_connection.accept()  # Device Tried To Connect
+            client_id = DataTransfer.request_id(client_connection)  # On Connect Request ID
+            DataTransfer.send_data(client_connection, client_id)  # Echo Id Back To Client
+            client_type = DataTransfer.receive_data(client_connection)  # Get If Client Is Display Or Manager
+            DataTransfer.send_next(client_connection)  # Client Is Waiting, Send Next To Allow It To Continue
+
+            client_thread = ClientThread(client_connection, ('%s-%s' % (client_type, client_id)), self)
+            client_thread.start()
+            self.clients['%s-%s' % (client_type, client_id)] = client_thread
+
+            print('%s-%s connected on (%s:%s)' % (client_type, client_id, ip, port))
 
 
-tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-tcp_server.bind((socket.gethostname(), 2004))
+server_thread = ServerThread()
+server_thread.start()
 
-data_store = Data()
-command_parser = CommandParser(data_store)
-command_parser.start()
 
-server_thread = ClientThread(tcp_server, data_store, True)
-
-while True:
-    tcp_server.listen(50)
-    client_connection, (ip, port) = tcp_server.accept()
-    client_thread = ClientThread(client_connection, data_store, False)
-    client_thread.start()

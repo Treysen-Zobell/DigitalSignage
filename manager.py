@@ -1,109 +1,110 @@
 
-import tkinter as ttk
 import socket
 import time
+import tqdm
+import os
 
-DEVICE_ID = 'manager-0001'
-
-
-class Client:
-    def __init__(self):
-        self.id = ''
-        self.name = ''
-        self.location = ''
-        self.timetable = []
-        self.media_name = ''
-        self.media_extension = ''
-        self.media_last_update = ''
-
-        self.online = False
-        self.ip = ''
+DEVICE_ID = '000001'
+DEVICE_TYPE = 'manager'
+SERVER_IP = '127.0.0.1'  # Localhost
 
 
-host = socket.gethostname()
-ip = socket.gethostbyname(host)
-port = 2004
-buffer_size = 1024
+class DataTransfer:
+    @staticmethod
+    def send_data(socket_connection, data):
+        data = data + ';'
+        socket_connection.send(data.encode())
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    @staticmethod
+    def send_next(socket_connection):
+        socket_connection.send('null;'.encode())
+
+    @staticmethod
+    def receive_data(socket_connection):
+        socket_connection.setblocking(False)
+        data = ''
+        while ';' not in data:
+            try:
+                data += socket_connection.recv(1024).decode()
+            except BlockingIOError:
+                pass
+        data = data[:-1]
+        socket_connection.setblocking(True)
+        return data
+
+    @staticmethod
+    def send_id(socket_connection, client_id):
+        DataTransfer.send_data(socket_connection, client_id)
+
+    @staticmethod
+    def request_id(socket_connection):
+        DataTransfer.send_data(socket_connection, 'request id')
+        client_id = DataTransfer.receive_data(socket_connection)
+        return client_id
+
+
+class FileTransfer:
+    @staticmethod
+    def transmit_file(socket_connection, filename):
+        DataTransfer.receive_data(socket_connection)
+        if filename[0] == '.':
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename[2:])
+        file_size = os.path.getsize(filename)
+        file_data = open(filename, 'rb').read()
+
+        # Transmit Data
+        print('[+] Transmitting File to (%s:%s)' % socket_connection.getsockname())
+        print('Sending File Size')
+        DataTransfer.send_data(socket_connection, str(file_size))
+        print(socket_connection.recv(1024))
+        print('File Size Received')
+        print('Sending File')
+        socket_connection.send(file_data)
+        print(socket_connection.recv(1024))
+        print('[-] Done Transmitting File to (%s:%s)' % socket_connection.getsockname())
+
+    @staticmethod
+    def receive_file(socket_connection, filename):
+        DataTransfer.send_next(socket_connection)
+        print('Waiting For File Size')
+        file_size = int(DataTransfer.receive_data(socket_connection))
+        print('file_size=%i' % file_size)
+        DataTransfer.send_next(socket_connection)
+
+        socket_connection.settimeout(3)
+        progress = tqdm.tqdm(range(file_size), 'Receiving File', unit='B', unit_scale=True, unit_divisor=1024)
+        with open(filename, 'wb') as file:
+            for _ in progress:
+                try:
+                    bytes_read = socket_connection.recv(4096)
+                except socket.timeout:
+                    break
+                if not bytes_read:
+                    break
+                file.write(bytes_read)
+                progress.update(len(bytes_read))
+        DataTransfer.send_next(socket_connection)
+        socket_connection.settimeout(10)
+
+server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 while True:
     try:
-        client.connect((host, port))
+        server_connection.connect((SERVER_IP, 12345))
         break
     except ConnectionRefusedError:
         print('[E] Server is Inaccessible, Attempting Again in 10s')
         time.sleep(10)
+id_request = DataTransfer.receive_data(server_connection)
+DataTransfer.send_id(server_connection, DEVICE_ID)
+DataTransfer.receive_data(server_connection)
+DataTransfer.send_data(server_connection, DEVICE_TYPE)
+DataTransfer.receive_data(server_connection)
 
 while True:
-    data = client.recv(1024).decode()
-    if 'REQUEST id' in data:
-        client.send(DEVICE_ID.encode())
-        wait_response = client.recv(1024).decode()
-        print(wait_response)
+    try:
+        message = input('Send: ')
+        DataTransfer.send_data(server_connection, message)
+        reply = DataTransfer.receive_data(server_connection)
+    except ConnectionResetError:
+        print('Server Is Down')
         break
-
-client.send('REQUEST CLIENT name;'.encode())
-name = client.recv(1024).decode()
-print(name)
-
-client.send('REQUEST CLIENT media_extension;'.encode())
-media_extension = client.recv(1024).decode()
-print(media_extension)
-
-client.send('REQUEST CLIENT media_last_update;'.encode())
-media_last_update = client.recv(1024).decode()
-print(media_last_update)
-
-client.send('SET CLIENT client-0001 name TO name2;'.encode())
-media_last_update = client.recv(1024).decode()
-print(media_last_update)
-
-# Tkinter Section
-
-def update_media():
-    client.send('COMMAND update media;'.encode())
-
-def get_media():
-    client.send('REQUEST media list;'.encode())
-    data = client.recv(1024).decode()
-    media = data[10:-1].split(', ')
-    print('%s%s' % (data[:9], media))
-    return media
-
-media = get_media()
-
-root = ttk.Tk()
-root.title("Tk dropdown example")
-
-# Add a grid
-mainframe = ttk.Frame(root)
-mainframe.grid(column=0,row=0, sticky=(ttk.N, ttk.W, ttk.E, ttk.S))
-mainframe.columnconfigure(0, weight = 1)
-mainframe.rowconfigure(0, weight = 1)
-mainframe.pack(pady = 100, padx = 100)
-
-# Create a Tkinter variable
-tkvar = ttk.StringVar(root)
-
-tkvar.set(media[0]) # set the default option
-popupMenu = ttk.OptionMenu(mainframe, tkvar, *media)
-ttk.Label(mainframe, text="Choose Media").grid(row = 1, column = 1)
-popupMenu.grid(row=2, column=1)
-
-# on change dropdown value
-def change_dropdown(*args):
-    print( tkvar.get() )
-
-button = ttk.Button(mainframe, text='Update Media (Server)', command=update_media)
-button.grid(row = 3, column=1)
-
-button2 = ttk.Button(mainframe, text='Update Media (This Client)', command=get_media)
-button2.grid(row = 4, column=1)
-
-# link function to change dropdown
-tkvar.trace('w', change_dropdown)
-
-root.mainloop()
-
-client.detach()
-client.close()
