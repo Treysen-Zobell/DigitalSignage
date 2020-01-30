@@ -5,8 +5,8 @@ import tqdm
 import os
 
 DEVICE_ID = '000001'
-DEVICE_TYPE = 'display'
-SERVER_IP = '192.168.1.8'  # Localhost
+DEVICE_TYPE = 'manager'
+SERVER_IP = '127.0.0.1'  # Localhost
 
 
 class DataTransfer:
@@ -78,10 +78,8 @@ class FileTransfer:
                 try:
                     bytes_read = socket_connection.recv(4096)
                 except socket.timeout:
-                    print('IO Blocked')
                     break
                 if not bytes_read:
-                    print('No Bytes')
                     break
                 file.write(bytes_read)
                 progress.update(len(bytes_read))
@@ -103,5 +101,10 @@ DataTransfer.receive_data(server_connection)
 DataTransfer.send_data(server_connection, DEVICE_TYPE)
 DataTransfer.receive_data(server_connection)
 
-DataTransfer.send_next(server_connection)
-FileTransfer.receive_file(server_connection, 'new_test.mp4')
+# DataTransfer.send_next(server_connection)
+# FileTransfer.receive_file(server_connection, 'new_test.mp4')
+
+while True:
+    message = input('Send: ')
+    DataTransfer.send_data(server_connection, message)
+    reply = DataTransfer.receive_data(server_connection)

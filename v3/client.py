@@ -6,7 +6,7 @@ import os
 
 DEVICE_ID = '000001'
 DEVICE_TYPE = 'display'
-SERVER_IP = socket.gethostname()  # Localhost
+SERVER_IP = '127.0.0.1'  # Localhost
 
 
 class DataTransfer:
@@ -17,14 +17,19 @@ class DataTransfer:
 
     @staticmethod
     def send_next(socket_connection):
-        socket_connection.send('null'.encode())
+        socket_connection.send('null;'.encode())
 
     @staticmethod
     def receive_data(socket_connection):
+        socket_connection.setblocking(False)
         data = ''
         while ';' not in data:
-            data += socket_connection.recv(1024).decode()
+            try:
+                data += socket_connection.recv(1024).decode()
+            except BlockingIOError:
+                pass
         data = data[:-1]
+        socket_connection.setblocking(True)
         return data
 
     @staticmethod
@@ -41,6 +46,7 @@ class DataTransfer:
 class FileTransfer:
     @staticmethod
     def transmit_file(socket_connection, filename):
+        DataTransfer.receive_data(socket_connection)
         if filename[0] == '.':
             filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename[2:])
         file_size = os.path.getsize(filename)
@@ -59,31 +65,32 @@ class FileTransfer:
 
     @staticmethod
     def receive_file(socket_connection, filename):
+        DataTransfer.send_next(socket_connection)
         print('Waiting For File Size')
         file_size = int(DataTransfer.receive_data(socket_connection))
         print('file_size=%i' % file_size)
         DataTransfer.send_next(socket_connection)
 
-        socket_connection.setblocking(False)
+        socket_connection.settimeout(3)
         progress = tqdm.tqdm(range(file_size), 'Receiving File', unit='B', unit_scale=True, unit_divisor=1024)
         with open(filename, 'wb') as file:
             for _ in progress:
                 try:
                     bytes_read = socket_connection.recv(4096)
-                except BlockingIOError:
+                except socket.timeout:
                     break
                 if not bytes_read:
                     break
                 file.write(bytes_read)
                 progress.update(len(bytes_read))
         DataTransfer.send_next(socket_connection)
-        socket_connection.setblocking(True)
+        socket_connection.settimeout(10)
 
 
 server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 while True:
     try:
-        server_connection.connect((socket.gethostname(), 12345))
+        server_connection.connect((SERVER_IP, 12345))
         break
     except ConnectionRefusedError:
         print('[E] Server is Inaccessible, Attempting Again in 10s')
@@ -94,4 +101,10 @@ DataTransfer.receive_data(server_connection)
 DataTransfer.send_data(server_connection, DEVICE_TYPE)
 DataTransfer.receive_data(server_connection)
 
-# FileTransfer.receive_file(connection, 'new_test.mp4')
+# DataTransfer.send_next(server_connection)
+# FileTransfer.receive_file(server_connection, 'new_test.mp4')
+
+while True:
+    message = input('Send: ')
+    DataTransfer.send_data(server_connection, message)
+    reply = DataTransfer.receive_data(server_connection)

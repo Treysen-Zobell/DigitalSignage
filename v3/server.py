@@ -80,6 +80,49 @@ class FileTransfer:
         DataTransfer.send_next(socket_connection)
 
 
+class ClientThread(threading.Thread):
+    def __init__(self, client_connection, client_id):
+        threading.Thread.__init__(self)
+        self.connection = client_connection
+        self.client_id = client_id
+        self.should_update = True
+
+    def run(self):
+        print('[+] Stating Client Thread For %s' % self.client_id)
+        while True:
+            request = DataTransfer.receive_data(self.connection)
+            print(request)
+            DataTransfer.send_data(self.connection, request)
+
+
+class ManagerThread(threading.Thread):
+    def __init__(self, client_connection, client_id, server_thread):
+        threading.Thread.__init__(self)
+        self.connection = client_connection
+        self.client_id = client_id
+        self.server_thread = server_thread
+        self.should_update = True
+
+    def run(self):
+        print('[+] Stating Client Thread For %s' % self.client_id)
+        while True:
+            request = DataTransfer.receive_data(self.connection)
+            fields = request.split(' ')
+
+            if fields[0] == 'set':
+                print('destination=%s' % fields[1])
+                print('field=%s' % fields[2])
+                print('value=%s' % fields[3])
+
+                if fields[1] in self.server_thread.clients:
+                    print(self.server_thread.clients)
+                else:
+                    print(self.server_thread.clients)
+
+            print(fields)
+            DataTransfer.send_data(self.connection, request)
+
+
 class ServerThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -87,6 +130,7 @@ class ServerThread(threading.Thread):
         self.listen_connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.listen_connection.bind(('', 12345))
         self.listen_connection.listen(MAX_CONNECTIONS)
+        self.clients = {}
 
     def run(self):
         while True:
@@ -96,10 +140,18 @@ class ServerThread(threading.Thread):
             client_type = DataTransfer.receive_data(client_connection)  # Get If Client Is Display Or Manager
             DataTransfer.send_next(client_connection)  # Client Is Waiting, Send Next To Allow It To Continue
 
+            if client_type == 'display':
+                client_thread = ClientThread(client_connection, ('%s-%s' % (client_type, client_id)))
+                client_thread.run()
+                self.clients['%s-%s' % (client_type, client_id)] = client_thread
+            elif client_type == 'manager':
+                manager_thread = ManagerThread(client_connection, ('%s-%s' % (client_type, client_id)), self)
+                manager_thread.run()
+
             print('%s-%s connected on (%s:%s)' % (client_type, client_id, ip, port))
 
-            print('Transfering File')
-            FileTransfer.transmit_file(client_connection, './test.mp4')
+            # print('Transferring File')
+            # FileTransfer.transmit_file(client_connection, './test.mp4')
 
 
 server_thread = ServerThread()
