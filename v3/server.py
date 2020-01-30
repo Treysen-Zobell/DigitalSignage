@@ -15,7 +15,7 @@ class DataTransfer:
 
     @staticmethod
     def send_next(socket_connection):
-        socket_connection.send('null'.encode())
+        socket_connection.send('null;'.encode())
 
     @staticmethod
     def receive_data(socket_connection):
@@ -39,6 +39,7 @@ class DataTransfer:
 class FileTransfer:
     @staticmethod
     def transmit_file(socket_connection, filename):
+        DataTransfer.receive_data(socket_connection)
         if filename[0] == '.':
             filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename[2:])
         file_size = os.path.getsize(filename)
@@ -46,8 +47,9 @@ class FileTransfer:
 
         # Transmit Data
         print('[+] Transmitting File to (%s:%s)' % socket_connection.getsockname())
-        print('Sending File Size')
+        print('Sending File Size %s' % file_size)
         DataTransfer.send_data(socket_connection, str(file_size))
+        print('File Size Sent')
         print(socket_connection.recv(1024))
         print('File Size Received')
         print('Sending File')
@@ -57,25 +59,25 @@ class FileTransfer:
 
     @staticmethod
     def receive_file(socket_connection, filename):
+        DataTransfer.send_next(socket_connection)
         print('Waiting For File Size')
         file_size = int(DataTransfer.receive_data(socket_connection))
         print('file_size=%i' % file_size)
         DataTransfer.send_next(socket_connection)
 
-        socket_connection.setblocking(False)
+        socket_connection.settimeout(5)
         progress = tqdm.tqdm(range(file_size), 'Receiving File', unit='B', unit_scale=True, unit_divisor=1024)
         with open(filename, 'wb') as file:
             for _ in progress:
                 try:
                     bytes_read = socket_connection.recv(4096)
-                except BlockingIOError:
+                except socket.timeout:
                     break
                 if not bytes_read:
                     break
                 file.write(bytes_read)
                 progress.update(len(bytes_read))
         DataTransfer.send_next(socket_connection)
-        socket_connection.setblocking(True)
 
 
 class ServerThread(threading.Thread):
@@ -83,7 +85,7 @@ class ServerThread(threading.Thread):
         threading.Thread.__init__(self)
         self.listen_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listen_connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listen_connection.bind((socket.gethostname(), 12345))
+        self.listen_connection.bind(('', 12345))
         self.listen_connection.listen(MAX_CONNECTIONS)
 
     def run(self):
@@ -95,6 +97,9 @@ class ServerThread(threading.Thread):
             DataTransfer.send_next(client_connection)  # Client Is Waiting, Send Next To Allow It To Continue
 
             print('%s-%s connected on (%s:%s)' % (client_type, client_id, ip, port))
+
+            print('Transfering File')
+            FileTransfer.transmit_file(client_connection, './test.mp4')
 
 
 server_thread = ServerThread()

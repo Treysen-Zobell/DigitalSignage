@@ -6,6 +6,7 @@ import os
 
 DEVICE_ID = '000001'
 DEVICE_TYPE = 'display'
+SERVER_IP = socket.gethostname()  # Localhost
 
 
 class DataTransfer:

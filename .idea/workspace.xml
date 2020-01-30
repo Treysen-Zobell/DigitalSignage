@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9887a093-0e96-4555-8ad8-fb562e5fbb6d" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/basic_manager.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v3/client.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v3/communication.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v3/server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v3/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/v3/client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v3/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/v3/server.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,45 +12,28 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.47134286">
+    <splitter split-orientation="horizontal" split-proportion="0.28101265">
       <split-first>
-        <splitter split-orientation="horizontal" split-proportion="0.5">
-          <split-first>
-            <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-              <file pinned="false" current-in-tab="true">
-                <entry file="file://$PROJECT_DIR$/v3/server.py">
-                  <provider selected="true" editor-type-id="text-editor">
-                    <state relative-caret-position="17">
-                      <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
-                    </state>
-                  </provider>
-                </entry>
-              </file>
-            </leaf>
-          </split-first>
-          <split-second>
-            <leaf>
-              <file pinned="false" current-in-tab="false">
-                <entry file="file://$PROJECT_DIR$/v3/server.py">
-                  <provider selected="true" editor-type-id="text-editor">
-                    <state relative-caret-position="7">
-                      <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
-                    </state>
-                  </provider>
-                </entry>
-              </file>
-              <file pinned="false" current-in-tab="true">
-                <entry file="file://$PROJECT_DIR$/v3/clients.json">
-                  <provider selected="true" editor-type-id="text-editor">
-                    <state relative-caret-position="221">
-                      <caret line="13" column="1" lean-forward="true" selection-start-line="13" selection-start-column="1" selection-end-line="13" selection-end-column="1" />
-                    </state>
-                  </provider>
-                </entry>
-              </file>
-            </leaf>
-          </split-second>
-        </splitter>
+        <leaf>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/v3/server.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="7">
+                  <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/v3/clients.json">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="221">
+                  <caret line="13" column="1" lean-forward="true" selection-start-line="13" selection-start-column="1" selection-end-line="13" selection-end-column="1" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
       </split-first>
       <split-second>
         <splitter split-orientation="horizontal" split-proportion="0.5">
@@ -62,12 +42,10 @@
               <file pinned="false" current-in-tab="true">
                 <entry file="file://$PROJECT_DIR$/v3/server.py">
                   <provider selected="true" editor-type-id="text-editor">
-                    <state relative-caret-position="561">
-                      <caret line="98" lean-forward="true" selection-start-line="98" selection-end-line="98" />
+                    <state relative-caret-position="646">
+                      <caret line="65" column="36" selection-start-line="65" selection-start-column="36" selection-end-line="65" selection-end-column="36" />
                       <folding>
                         <element signature="e#1#7#0" expanded="true" />
-                        <element signature="e#102#873#0" />
-                        <element signature="e#560#2233#0" />
                       </folding>
                     </state>
                   </provider>
@@ -80,8 +58,8 @@
               <file pinned="false" current-in-tab="true">
                 <entry file="file://$PROJECT_DIR$/v3/client.py">
                   <provider selected="true" editor-type-id="text-editor">
-                    <state relative-caret-position="527">
-                      <caret line="96" lean-forward="true" selection-start-line="96" selection-end-line="96" />
+                    <state relative-caret-position="136">
+                      <caret line="8" column="45" selection-start-line="8" selection-start-column="45" selection-end-line="8" selection-end-column="45" />
                       <folding>
                         <element signature="e#1#14#0" expanded="true" />
                         <element signature="e#75#892#0" />
@@ -125,9 +103,9 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-5" />
-    <option name="width" value="5131" />
-    <option name="height" value="1406" />
+    <option name="x" value="1273" />
+    <option name="width" value="3853" />
+    <option name="height" value="1407" />
   </component>
   <component name="ProjectId" id="1WpDY3cqOEePebUoZZiu95BpwJc" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -176,7 +154,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.client (1)">
+  <component name="RunManager" selected="Python.server (1)">
     <configuration name="basic_manager" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="DigitalSignage" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -284,8 +262,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.client (1)" />
         <item itemvalue="Python.server (1)" />
+        <item itemvalue="Python.client (1)" />
         <item itemvalue="Python.basic_manager" />
         <item itemvalue="Python.basic_server" />
         <item itemvalue="Python.server" />
@@ -306,15 +284,15 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-5" y="0" width="5131" height="1406" extended-state="0" />
+    <frame x="1273" y="0" width="3853" height="1407" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.05105046" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.06815203" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.22309504" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.22291994" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.3998441" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -423,21 +401,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/v3/server.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
-          <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/v3/client.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="527">
-          <caret line="96" lean-forward="true" selection-start-line="96" selection-end-line="96" />
+        <state relative-caret-position="136">
+          <caret line="8" column="45" selection-start-line="8" selection-start-column="45" selection-end-line="8" selection-end-column="45" />
           <folding>
             <element signature="e#1#14#0" expanded="true" />
             <element signature="e#75#892#0" />
             <element signature="e#589#2262#0" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/v3/server.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="646">
+          <caret line="65" column="36" selection-start-line="65" selection-start-column="36" selection-end-line="65" selection-end-column="36" />
+          <folding>
+            <element signature="e#1#7#0" expanded="true" />
           </folding>
         </state>
       </provider>
