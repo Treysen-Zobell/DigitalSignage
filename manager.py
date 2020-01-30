@@ -86,6 +86,7 @@ class FileTransfer:
         DataTransfer.send_next(socket_connection)
         socket_connection.settimeout(10)
 
+
 server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 while True:
     try:

@@ -1,9 +1,12 @@
 
 import subprocess
+import threading
+import datetime
 import socket
 import shutil
 import time
 import tqdm
+import cec
 import os
 
 DEVICE_ID = '000001'
@@ -33,6 +36,12 @@ class DataTransfer:
         data = data[:-1]
         socket_connection.setblocking(True)
         return data
+
+    @staticmethod
+    def receive_timetable(socket_connection):
+        timetable = DataTransfer.receive_data(socket_connection)
+        timetable = timetable.split(',')
+        return timetable
 
     @staticmethod
     def send_id(socket_connection, client_id):
@@ -89,6 +98,46 @@ class FileTransfer:
         socket_connection.settimeout(10)
 
 
+class ScreenOnOffController(threading.Thread)
+    def __init__(self, timetable):
+        threading.Thread.__init__(self)
+        self.timetable = timetable
+
+    def run(self):
+        cec.init()
+        self.tv = cec.Device(cec.CECDEVICE_TV)
+        self.tv.power_on()
+        self.on = True
+        while True:
+            if self.should_be_on():
+                if not self.on:
+                    self.tv.power_on()
+                    self.on = True
+            else:
+                if self.on:
+                    self.tv.standby()
+                    self.on = False
+            time.sleep(60)
+
+
+
+    def should_be_on(self):
+        start_hours = self.timetable[0].split(':')[0]
+        start_minutes = self.timetable[0].split(':')[1]
+        end_hours = self.timetable[1].split(':')[0]
+        end_minutes = self.timetable[1].split(':')[1]
+
+        start = datetime.time(start_hours, start_minutes, 0, 0)
+        end = datetime.time(end_hours, end_minutes, 0, 0)
+        now = datetime.datetime.now().time()
+
+        if start <= end:
+            return start <= now <= end
+        else:
+            return start <= now or now <= end
+
+
+
 server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 while True:
     try:
@@ -105,6 +154,11 @@ DataTransfer.send_id(server_connection, DEVICE_ID)
 DataTransfer.receive_data(server_connection)
 DataTransfer.send_data(server_connection, DEVICE_TYPE)
 DataTransfer.receive_data(server_connection)
+DataTransfer.send_data(server_connection, 'get %s-%s timetable' % (DEVICE_TYPE, DEVICE_ID))
+timetable = DataTransfer.receive_timetable(server_connection)
+
+screen_controller = ScreenOnOffController(timetable)
+screen_controller.start()
 
 while True:
     try:
