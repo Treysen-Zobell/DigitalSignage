@@ -1,77 +1,107 @@
 
 import socket
 import time
+import tqdm
 import os
 
-DEVICE_ID = 'client-0001'
+DEVICE_ID = '000001'
+DEVICE_TYPE = 'display'
+SERVER_IP = '192.168.1.8'  # Localhost
 
 
-class Client:
-    def __init__(self):
-        self.id = ''
-        self.name = ''
-        self.location = ''
-        self.timetable = []
-        self.media_name = ''
-        self.media_extension = ''
-        self.media_last_update = ''
+class DataTransfer:
+    @staticmethod
+    def send_data(socket_connection, data):
+        data = data + ';'
+        socket_connection.send(data.encode())
 
-        self.online = False
-        self.ip = ''
+    @staticmethod
+    def send_next(socket_connection):
+        socket_connection.send('null;'.encode())
+
+    @staticmethod
+    def receive_data(socket_connection):
+        socket_connection.setblocking(False)
+        data = ''
+        while ';' not in data:
+            try:
+                data += socket_connection.recv(1024).decode()
+            except BlockingIOError:
+                pass
+        data = data[:-1]
+        socket_connection.setblocking(True)
+        return data
+
+    @staticmethod
+    def send_id(socket_connection, client_id):
+        DataTransfer.send_data(socket_connection, client_id)
+
+    @staticmethod
+    def request_id(socket_connection):
+        DataTransfer.send_data(socket_connection, 'request id')
+        client_id = DataTransfer.receive_data(socket_connection)
+        return client_id
 
 
-def receive_file(filename):
-    file_size = int(client.recv(1024).decode())
-    print(file_size)
-    current_size = 0
-    file = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename), 'wb')
-    while current_size < file_size:
-        segment = client.recv(1024)
-        file.write(segment)
-        current_size += 1024
-    file.close()
+class FileTransfer:
+    @staticmethod
+    def transmit_file(socket_connection, filename):
+        DataTransfer.receive_data(socket_connection)
+        if filename[0] == '.':
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename[2:])
+        file_size = os.path.getsize(filename)
+        file_data = open(filename, 'rb').read()
+
+        # Transmit Data
+        print('[+] Transmitting File to (%s:%s)' % socket_connection.getsockname())
+        print('Sending File Size')
+        DataTransfer.send_data(socket_connection, str(file_size))
+        print(socket_connection.recv(1024))
+        print('File Size Received')
+        print('Sending File')
+        socket_connection.send(file_data)
+        print(socket_connection.recv(1024))
+        print('[-] Done Transmitting File to (%s:%s)' % socket_connection.getsockname())
+
+    @staticmethod
+    def receive_file(socket_connection, filename):
+        DataTransfer.send_next(socket_connection)
+        print('Waiting For File Size')
+        file_size = int(DataTransfer.receive_data(socket_connection))
+        print('file_size=%i' % file_size)
+        DataTransfer.send_next(socket_connection)
+
+        socket_connection.settimeout(3)
+        progress = tqdm.tqdm(range(file_size), 'Receiving File', unit='B', unit_scale=True, unit_divisor=1024)
+        with open(filename, 'wb') as file:
+            for _ in progress:
+                try:
+                    bytes_read = socket_connection.recv(4096)
+                except socket.timeout:
+                    print('IO Blocked')
+                    break
+                if not bytes_read:
+                    print('No Bytes')
+                    break
+                file.write(bytes_read)
+                progress.update(len(bytes_read))
+        DataTransfer.send_next(socket_connection)
+        socket_connection.settimeout(10)
 
 
-host = socket.gethostname()
-ip = socket.gethostbyname(host)
-port = 2004
-buffer_size = 1024
-
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 while True:
     try:
-        client.connect((host, port))
+        server_connection.connect((SERVER_IP, 12345))
         break
     except ConnectionRefusedError:
         print('[E] Server is Inaccessible, Attempting Again in 10s')
         time.sleep(10)
+id_request = DataTransfer.receive_data(server_connection)
+DataTransfer.send_id(server_connection, DEVICE_ID)
+DataTransfer.receive_data(server_connection)
+DataTransfer.send_data(server_connection, DEVICE_TYPE)
+DataTransfer.receive_data(server_connection)
 
-while True:
-    data = client.recv(1024).decode()
-    if 'REQUEST id' in data:
-        client.send(DEVICE_ID.encode())
-        wait_response = client.recv(1024).decode()
-        print(wait_response)
-        break
-
-# REQUEST TYPE - DATA DESTINATION - DATA NAME - DATA SOURCE
-client.send('REQUEST client-0001 name client-0001;'.encode())
-print(client.recv(1024).decode())
-client.send('REQUEST client-0001 media_extension client-0001;'.encode())
-print(client.recv(1024).decode())
-client.send('REQUEST client-0001 media_last_update client-0001;'.encode())
-print(client.recv(1024).decode())
-client.send('REQUEST server-0001 media_files client-0001;'.encode())
-print(client.recv(1024).decode())
-client.send('SET server-0001 media_files [1, 0.001] client-0001;'.encode())
-print(client.recv(1024).decode())
-client.send('SET server-0001 file_path hello client-0001;'.encode())
-print(client.recv(1024).decode())
-client.send('UPDATE client-0001;'.encode())
-print(client.recv(1024).decode())
-
-client.send('TRANSFER ./test.mp4 TO client-0001;'.encode())
-receive_file('content.mp4')
-
-client.detach()
-client.close()
+DataTransfer.send_next(server_connection)
+FileTransfer.receive_file(server_connection, 'new_test.mp4')
