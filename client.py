@@ -38,12 +38,6 @@ class DataTransfer:
         return data
 
     @staticmethod
-    def receive_timetable(socket_connection):
-        timetable = DataTransfer.receive_data(socket_connection)
-        timetable = timetable.split(',')
-        return timetable
-
-    @staticmethod
     def send_id(socket_connection, client_id):
         DataTransfer.send_data(socket_connection, client_id)
 
@@ -146,10 +140,8 @@ DataTransfer.send_id(server_connection, DEVICE_ID)
 DataTransfer.receive_data(server_connection)
 DataTransfer.send_data(server_connection, DEVICE_TYPE)
 DataTransfer.receive_data(server_connection)
-DataTransfer.send_data(server_connection, 'get %s-%s timetable' % (DEVICE_TYPE, DEVICE_ID))
-timetable = DataTransfer.receive_timetable(server_connection)
 
-screen_controller = ScreenOnOffController(timetable)
+screen_controller = ScreenOnOffController()
 screen_controller.start()
 
 while True:
