@@ -95,12 +95,12 @@ class FileTransfer:
 class ScreenOnOffController(threading.Thread):
     def __init__(self,):
         threading.Thread.__init__(self)
-        self.start = datetime.time(7, 0, 0, 0)
-        self.end = datetime.time(17, 0, 0, 0)
         self.tv = cec.Device(cec.CECDEVICE_TV)
         self.on = True
 
     def run(self):
+        self.start = datetime.time(7, 0, 0, 0)
+        self.end = datetime.time(17, 0, 0, 0)
         cec.init()
         self.tv.power_on()
         self.on = True
