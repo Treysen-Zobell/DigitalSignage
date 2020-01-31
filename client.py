@@ -11,7 +11,7 @@ import os
 
 DEVICE_ID = '000001'
 DEVICE_TYPE = 'display'
-SERVER_IP = '192.168.1.8'  # Localhost
+SERVER_IP = '192.168.1.8'
 
 
 class DataTransfer:
@@ -98,10 +98,12 @@ class FileTransfer:
         socket_connection.settimeout(10)
 
 
-class ScreenOnOffController(threading.Thread)
+class ScreenOnOffController(threading.Thread):
     def __init__(self, timetable):
         threading.Thread.__init__(self)
         self.timetable = timetable
+        self.start = datetime.time(7, 0, 0, 0)
+        self.end = datetime.time(17, 0, 0, 0)
 
     def run(self):
         cec.init()
@@ -119,23 +121,13 @@ class ScreenOnOffController(threading.Thread)
                     self.on = False
             time.sleep(60)
 
-
-
     def should_be_on(self):
-        start_hours = self.timetable[0].split(':')[0]
-        start_minutes = self.timetable[0].split(':')[1]
-        end_hours = self.timetable[1].split(':')[0]
-        end_minutes = self.timetable[1].split(':')[1]
-
-        start = datetime.time(start_hours, start_minutes, 0, 0)
-        end = datetime.time(end_hours, end_minutes, 0, 0)
         now = datetime.datetime.now().time()
 
-        if start <= end:
-            return start <= now <= end
+        if self.start <= self.end:
+            return self.start <= now <= self.end
         else:
-            return start <= now or now <= end
-
+            return self.start <= now or now <= self.end
 
 
 server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

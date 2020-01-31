@@ -79,7 +79,6 @@ class ClientThread(threading.Thread):
         self.server_thread = server_thread_in
         self.should_update = True
         self.media_name = self.server_thread.json_clients[self.client_id]['media_name']
-        self.timetable = ''
 
     def run(self):
         try:
@@ -97,8 +96,6 @@ class ClientThread(threading.Thread):
                                 DataTransfer.send_data(self.server_thread.clients[fields[1]].connection, 'false')
                         if fields[2] == 'media_name':
                             DataTransfer.send_data(self.server_thread.clients[fields[1]].connection, self.server_thread.clients[fields[1]].media_name)
-                        if fields[2] == 'timetable':
-                            DataTransfer.send_data(self.server_thread.clients[fields[1]].connection, self.server_thread.clients[fields[1]].timetable)
                     elif fields[1] in self.server_thread.json_clients:
                         DataTransfer.send_next(self.server_thread.json_clients[fields[1]][fields[2]])
                         self.server_thread.json_clients[fields[1]][fields[2]] = fields[3]
@@ -111,8 +108,6 @@ class ClientThread(threading.Thread):
                         if fields[2] == 'media_name':
                             self.server_thread.clients[fields[1]].media_name = fields[3]
                             DataTransfer.send_next(self.connection)
-                        if fields[2] == 'timetable':
-                            self.server_thread.clients[fields[1]].timetable = fields[3]
 
                     if fields[1] in self.server_thread.json_clients:
                         self.server_thread.json_clients[fields[1]][fields[2]] = fields[3]
@@ -154,8 +149,6 @@ class ServerThread(threading.Thread):
             DataTransfer.send_data(client_connection, client_id)  # Echo Id Back To Client
             client_type = DataTransfer.receive_data(client_connection)  # Get If Client Is Display Or Manager
             DataTransfer.send_next(client_connection)  # Client Is Waiting, Send Next To Allow It To Continue
-            DataTransfer.receive_data(client_connection)  # Client Is Requesting Timetable
-            DataTransfer.send_data(client_connection, self.json_clients['%s-%s' % (client_type, client_id)]['timetable'])
 
             client_thread = ClientThread(client_connection, ('%s-%s' % (client_type, client_id)), self)
             client_thread.start()
