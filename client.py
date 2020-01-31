@@ -93,15 +93,15 @@ class FileTransfer:
 
 
 class ScreenOnOffController(threading.Thread):
-    def __init__(self, timetable):
+    def __init__(self,):
         threading.Thread.__init__(self)
-        self.timetable = timetable
         self.start = datetime.time(7, 0, 0, 0)
         self.end = datetime.time(17, 0, 0, 0)
+        self.tv = cec.Device(cec.CECDEVICE_TV)
+        self.on = True
 
     def run(self):
         cec.init()
-        self.tv = cec.Device(cec.CECDEVICE_TV)
         self.tv.power_on()
         self.on = True
         while True:
@@ -124,6 +124,7 @@ class ScreenOnOffController(threading.Thread):
             return self.start <= now or now <= self.end
 
 
+time.sleep(15)
 server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 while True:
     try:
