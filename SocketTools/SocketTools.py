@@ -10,7 +10,8 @@ import sys
 error_buffer_size = 10
 error_buffer = []
 
-event_buffer_size = 10
+# WARNING WILL CONSUME MUCH RAM IF SENDING FILES
+event_buffer_size = 0
 event_buffer = []
 
 disconnect_message = 'BYMZagRN7Y6w5A0FzQg3pDJe5BkY9MIX9ym8B'
@@ -111,7 +112,7 @@ def receive(conn, timeout=5, should_exit=False):
         # Retrieve message from buffer
         message = conn.recv(message_length)
         while len(message) < message_length:
-            data = conn.recv(message_length - len(message)).decode()
+            data = conn.recv(message_length - len(message))
             if not data:
                 log_error('client disconnected')
                 log_event(('error', 'client_disconnected'))
@@ -119,8 +120,6 @@ def receive(conn, timeout=5, should_exit=False):
                     sys.exit(-1)
             else:
                 message += data
-
-            message += conn.recv(message_length - len(message))
 
         if message_type == '0':
             log_event(('received', bytes, message))
