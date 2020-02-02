@@ -1,178 +1,116 @@
 
+from SocketTools import SocketTools
+
 import subprocess
 import threading
 import datetime
+import platform
 import socket
-import shutil
 import time
-import tqdm
-import cec
+import uuid
+# import cec
 import os
 
-DEVICE_ID = '000001'
-DEVICE_TYPE = 'display'
+
 SERVER_IP = '192.168.1.8'
+SERVER_PORT = 12345
 
 
-class DataTransfer:
-    @staticmethod
-    def send_data(socket_connection, data):
-        data = data + ';'
-        socket_connection.send(data.encode())
-
-    @staticmethod
-    def send_next(socket_connection):
-        socket_connection.send('null;'.encode())
-
-    @staticmethod
-    def receive_data(socket_connection):
-        socket_connection.setblocking(False)
-        data = ''
-        while ';' not in data:
-            try:
-                data += socket_connection.recv(1024).decode()
-            except BlockingIOError:
-                pass
-        data = data[:-1]
-        socket_connection.setblocking(True)
-        return data
-
-    @staticmethod
-    def send_id(socket_connection, client_id):
-        DataTransfer.send_data(socket_connection, client_id)
-
-    @staticmethod
-    def request_id(socket_connection):
-        DataTransfer.send_data(socket_connection, 'request id')
-        client_id = DataTransfer.receive_data(socket_connection)
-        return client_id
-
-
-class FileTransfer:
-    @staticmethod
-    def transmit_file(socket_connection, filename):
-        DataTransfer.receive_data(socket_connection)
-        if filename[0] == '.':
-            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename[2:])
-        file_size = os.path.getsize(filename)
-        file_data = open(filename, 'rb').read()
-
-        # Transmit Data
-        print('[+] Transmitting File to (%s:%s)' % socket_connection.getsockname())
-        print('Sending File Size')
-        DataTransfer.send_data(socket_connection, str(file_size))
-        print(socket_connection.recv(1024))
-        print('File Size Received')
-        print('Sending File')
-        socket_connection.send(file_data)
-        print(socket_connection.recv(1024))
-        print('[-] Done Transmitting File to (%s:%s)' % socket_connection.getsockname())
-
-    @staticmethod
-    def receive_file(socket_connection, filename):
-        DataTransfer.send_next(socket_connection)
-        print('Waiting For File Size')
-        file_size = int(DataTransfer.receive_data(socket_connection))
-        print('file_size=%i' % file_size)
-        DataTransfer.send_next(socket_connection)
-
-        socket_connection.settimeout(3)
-        progress = tqdm.tqdm(range(file_size), 'Receiving File', unit='B', unit_scale=True, unit_divisor=1024)
-        with open(filename, 'wb') as file:
-            for _ in progress:
-                try:
-                    bytes_read = socket_connection.recv(4096)
-                except socket.timeout:
-                    break
-                if not bytes_read:
-                    break
-                file.write(bytes_read)
-                progress.update(len(bytes_read))
-        DataTransfer.send_next(socket_connection)
-        socket_connection.settimeout(10)
-
-
-class ScreenOnOffController(threading.Thread):
-    def __init__(self,):
+class CECThread(threading.Thread):
+    def __init__(self, cec_timetable):
         threading.Thread.__init__(self)
-        self.tv = cec.Device(cec.CECDEVICE_TV)
-        self.on = True
+        # cec.init()
+        # self.tv = cec.Device(cec.CECDEVICE_TV)
+        self.timetable = self.load_timetable(cec_timetable)
+        # self.tv.power_on()
+        self.tv_is_on = True
 
     def run(self):
-        self.start = datetime.time(7, 0, 0, 0)
-        self.end = datetime.time(17, 0, 0, 0)
-        cec.init()
-        self.tv.power_on()
-        self.on = True
-        while True:
-            if self.should_be_on():
-                if not self.on:
-                    self.tv.power_on()
-                    self.on = True
-            else:
-                if self.on:
-                    self.tv.standby()
-                    self.on = False
-            time.sleep(60)
-
-    def should_be_on(self):
         now = datetime.datetime.now().time()
-
-        if self.start <= self.end:
-            return self.start <= now <= self.end
+        if self.timetable[0] <= self.timetable[1]:
+            should_be_on = self.timetable[0] <= now <= self.timetable[1]
         else:
-            return self.start <= now or now <= self.end
+            should_be_on = self.timetable[0] <= now or now <= self.timetable[1]
+
+        if should_be_on:
+            if not self.tv_is_on:
+                print('Tv On Sent')  # self.tv.power_on()
+                self.tv_is_on = True
+        else:
+            if self.tv_is_on:
+                print('Tv Off Sent')  # self.tv.standby()
+                self.tv_is_on = False
+
+    @staticmethod
+    def load_timetable(cec_timetable):
+        cec_timetable = cec_timetable.split(',')
+        start = cec_timetable[0].split(':')
+        start = datetime.time(int(start[0]), int(start[1]))
+        end = cec_timetable[1].split(':')
+        end = datetime.time(int(end[0]), int(end[1]))
+        return start, end
 
 
-time.sleep(15)
-server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-while True:
+def connect(connection):
+    SocketTools.send(connection, mac_address)
+    media_data = SocketTools.receive(connection, timeout=None)[0]
+    with open('Media/media.mp4', 'wb') as media_file:
+        media_file.write(media_data)
+    SocketTools.send(connection, 'get %s_timetable' % mac_address)
+    cec_timetable = SocketTools.receive(connection)[0]
+    return cec_timetable
+
+
+def restart_media():
+    system = platform.system()
+    if system == 'Linux':
+        os.system('killall vlc')
+        os.system('cp Media/media.mp4.tmp Media/media.mp4')
+        subprocess.Popen(['cvlc', '-f', '--loop', 'Media/media.mp4'])
+
+
+try:
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.connect((SERVER_IP, SERVER_PORT))
+    mac_address = ':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8 * 6, 8)][::-1])
+    print(mac_address)
+
     try:
-        server_connection.connect((SERVER_IP, 12345))
-        break
-    except ConnectionRefusedError:
-        print('[E] Server is Inaccessible, Attempting Again in 10s')
-        time.sleep(10)
-    except OSError:
-        print('[E] Network Not Ready Yes, Attempting Again in 10s')
-        time.sleep(10)
-id_request = DataTransfer.receive_data(server_connection)
-DataTransfer.send_id(server_connection, DEVICE_ID)
-DataTransfer.receive_data(server_connection)
-DataTransfer.send_data(server_connection, DEVICE_TYPE)
-DataTransfer.receive_data(server_connection)
+        timetable = connect(server_socket)
+        cec_thread = CECThread(timetable)
+        cec_thread.start()
+        while True:
+            SocketTools.send(server_socket, 'get %s_should_update' % mac_address)
+            should_update = 'True' in SocketTools.receive(server_socket)[0]
 
-screen_controller = ScreenOnOffController()
-screen_controller.start()
+            if should_update:
+                SocketTools.send(server_socket, 'get %s_media' % mac_address)
+                media_name = SocketTools.receive(server_socket)[0]
 
-while True:
-    try:
-        DataTransfer.send_data(server_connection, 'get %s-%s should_update' % (DEVICE_TYPE, DEVICE_ID))
-        should_update = 'true' in DataTransfer.receive_data(server_connection)
-        if should_update:
-            DataTransfer.send_data(server_connection, 'set %s-%s should_update false' % (DEVICE_TYPE, DEVICE_ID))
-            print('Would Update Now')
-            DataTransfer.receive_data(server_connection)
-            DataTransfer.send_data(server_connection, 'get %s-%s media_name' % (DEVICE_TYPE, DEVICE_ID))
-            media_name = DataTransfer.receive_data(server_connection)
-            print('media_name=%s' % media_name)
-            DataTransfer.send_data(server_connection, 'request %s-%s file %s' % (DEVICE_TYPE, DEVICE_ID, media_name))
-            DataTransfer.receive_data(server_connection)
-            FileTransfer.receive_file(server_connection, '/home/pi/DigitalSignage/media.mp4.tmp')
-            os.system('killall vlc')
-            shutil.copyfile('/home/pi/DigitalSignage/media.mp4.tmp', '/home/pi/DigitalSignage/media.mp4')
-            subprocess.Popen(['cvlc', '-f', '--loop', '--video-on-top', '/home/pi/DigitalSignage/media.mp4'])
-            
-        print(should_update)
-        time.sleep(5)
-    except ConnectionResetError:
-        server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            server_connection.connect((SERVER_IP, 12345))
-            os.system('reboot')
-            break
-        except ConnectionRefusedError:
-            print('[E] Server is Inaccessible, Attempting Again in 10s')
-            time.sleep(10)
-    except BrokenPipeError:
-        os.system('reboot')
+                SocketTools.send(server_socket, 'transfer %s' % media_name)
+                file_data = SocketTools.receive(server_socket, timeout=None)[0]
+                with open('Media/media.mp4.tmp', 'wb') as file:
+                    file.write(file_data)
+
+                SocketTools.send(server_socket, 'get %s_timetable' % mac_address)
+                timetable = SocketTools.receive(server_socket)[0]
+                timetable = cec_thread.load_timetable(timetable)
+                cec_thread.timetable = timetable
+                print(timetable)
+
+                SocketTools.send(server_socket, 'set %s_should_update false' % mac_address)
+
+                restart_media()
+
+            else:
+                print('Up to date')
+
+            time.sleep(30)
+
+    except SocketTools.DisconnectError:
+        pass
+
+    SocketTools.disconnect(server_socket)
+
+except SocketTools.DisconnectError:
+    print('Disconnected.')
