@@ -54,7 +54,7 @@ class CECThread(threading.Thread):
 def connect(connection):
     SocketTools.send(connection, mac_address)
     media_data = SocketTools.receive(connection, timeout=None)[0]
-    with open('Media/media.mp4', 'wb') as media_file:
+    with open('Media/media.mp4', 'wb+') as media_file:
         media_file.write(media_data)
     SocketTools.send(connection, 'get %s_timetable' % mac_address)
     cec_timetable = SocketTools.receive(connection)[0]
@@ -89,7 +89,7 @@ try:
 
                 SocketTools.send(server_socket, 'transfer %s' % media_name)
                 file_data = SocketTools.receive(server_socket, timeout=None)[0]
-                with open('Media/media.mp4.tmp', 'wb') as file:
+                with open('Media/media.mp4.tmp', 'wb+') as file:
                     file.write(file_data)
 
                 SocketTools.send(server_socket, 'get %s_timetable' % mac_address)
