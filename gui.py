@@ -3,44 +3,72 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
                              QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
                              QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
                              QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
-                             QVBoxLayout, QWidget, QFormLayout, QScrollArea, QSpacerItem, QFrame)
-import sys
+                             QVBoxLayout, QWidget, QFormLayout, QScrollArea, QSpacerItem, QFrame, QFileDialog)
+import json, sys
 
 
 class Window(QWidget):
     def __init__(self):
         super().__init__()
-        self.initUI()
 
-    def initUI(self):
+        with open('devices.json', 'r') as json_file:
+            self.devices = json.load(json_file)
+
+        self.left_line_edit_list = []
+        self.left_checkbox_list = []
+        self.left_combo_list = []
+        self.left_status_list = []
+        self.left_line_edit_hints = []
+
+        self.init_ui()
+
+    def update(self):
+        for i in range(len(self.left_checkbox_list)):
+            if self.left_checkbox_list[i].isChecked():
+                print(self.left_line_edit_hints[i])
+
+    @staticmethod
+    def upload_file():
+        files = QFileDialog.getOpenFileNames()
+        print(files[0])
+
+    def init_ui(self):
         left_group_box = QGroupBox()
         left_grid_layout = QGridLayout()
-        left_line_edit_list = []
-        left_combo_list = []
-        left_status_list = []
-        for i in range(25):
-            left_line_edit_list.append(QLineEdit('default'))
-            left_line_edit_list[i].setFixedWidth(100)
 
-            left_line_edit_list[i].setToolTip('mac_address')
+        i = 0
+        for device in self.devices:
+            self.left_line_edit_list.append(QLineEdit(self.devices[device][0]))
+            self.left_line_edit_list[i].setFixedWidth(100)
 
-            left_combo_list.append(QComboBox())
+            self.left_line_edit_list[i].setToolTip(device)
+            self.left_line_edit_hints.append(device)
 
-            if i % 2 == 0:
-                left_status_list.append(QLabel('online'))
-                left_status_list[i].setObjectName('status_label_%d' % i)
-                left_status_list[i].setStyleSheet('QLabel#status_label_%d {color: green}' % i)
+            self.left_combo_list.append(QComboBox())
+            self.left_combo_list[i].addItems(['Media/media1.mp4', 'Media/media2.mp4', 'Media/media3.mp4'])
+
+            if self.devices[device][1] == 'online':
+                self.left_status_list.append(QLabel('online'))
+                self.left_status_list[i].setObjectName('status_label_%d' % i)
+                self.left_status_list[i].setStyleSheet('QLabel#status_label_%d {color: green}' % i)
             else:
-                left_status_list.append(QLabel('offline'))
-                left_status_list[i].setObjectName('status_label_%d' % i)
-                left_status_list[i].setStyleSheet('QLabel#status_label_%d {color: red}' % i)
-            left_status_list[i].setFixedWidth(50)
-            left_status_list[i].setFrameShape(QFrame.Panel)
-            left_status_list[i].setAlignment(Qt.AlignCenter)
+                self.left_status_list.append(QLabel('offline'))
+                self.left_status_list[i].setObjectName('status_label_%d' % i)
+                self.left_status_list[i].setStyleSheet('QLabel#status_label_%d {color: red}' % i)
+            self.left_status_list[i].setFixedWidth(50)
+            self.left_status_list[i].setFrameShape(QFrame.Panel)
+            self.left_status_list[i].setToolTip(self.devices[device][2])
+            self.left_status_list[i].setAlignment(Qt.AlignCenter)
 
-            left_grid_layout.addWidget(left_line_edit_list[i], i, 0)
-            left_grid_layout.addWidget(left_combo_list[i], i, 1)
-            left_grid_layout.addWidget(left_status_list[i], i, 2)
+            self.left_checkbox_list.append(QCheckBox())
+            self.left_checkbox_list[i].setFixedWidth(14)
+
+            left_grid_layout.addWidget(self.left_line_edit_list[i], i, 0)
+            left_grid_layout.addWidget(self.left_combo_list[i], i, 1)
+            left_grid_layout.addWidget(self.left_status_list[i], i, 2)
+            left_grid_layout.addWidget(self.left_checkbox_list[i], i, 3)
+
+            i += 1
 
         left_scroll = QScrollArea()
         left_scroll.setWidget(left_group_box)
@@ -54,12 +82,16 @@ class Window(QWidget):
         right_vbox_layout.setSpacing(10)
 
         update_button = QPushButton('Update')
-        select_button = QPushButton('Select')
+        upload_button = QPushButton('Upload')
+        update_button.clicked.connect(self.update)
+        upload_button.clicked.connect(self.upload_file)
         vertical_spacer = QSpacerItem(40, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        sign_label = QLabel('By: Treysen Zobell')
 
         right_vbox_layout.addWidget(update_button, alignment=Qt.AlignTop)
-        right_vbox_layout.addWidget(select_button, alignment=Qt.AlignTop)
+        right_vbox_layout.addWidget(upload_button, alignment=Qt.AlignTop)
         right_vbox_layout.addSpacerItem(vertical_spacer)
+        right_vbox_layout.addWidget(sign_label, alignment=Qt.AlignBottom)
 
         right_group_box.setLayout(right_vbox_layout)
 
