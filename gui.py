@@ -4,15 +4,23 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
                              QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
                              QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
                              QVBoxLayout, QWidget, QFormLayout, QScrollArea, QSpacerItem, QFrame, QFileDialog)
-import json, sys
+from SocketTools import SocketTools
+import socket
+import json
+import sys
+
+SERVER_IP = '127.0.0.1'
+SERVER_PORT = 12345
 
 
 class Window(QWidget):
-    def __init__(self):
+    def __init__(self, connection):
         super().__init__()
 
-        with open('devices.json', 'r') as json_file:
-            self.devices = json.load(json_file)
+        self.connection = connection
+
+        self.devices = SocketTools.receive(connection)[0]
+        print(self.devices)
 
         self.left_line_edit_list = []
         self.left_checkbox_list = []
@@ -106,8 +114,18 @@ class Window(QWidget):
         self.show()
 
 
+try:
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.connect((SERVER_IP, SERVER_PORT))
+    SocketTools.send(server_socket, 'management')
+
+except SocketTools.DisconnectError:
+    print('Disconnected.')
+
+
 app = QApplication(sys.argv)
 
-window = Window()
+window = Window(server_socket)
 
 app.exec_()
+SocketTools.disconnect(server_socket)

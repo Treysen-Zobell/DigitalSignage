@@ -52,6 +52,7 @@ class CECThread(threading.Thread):
 
 
 def connect(connection):
+    SocketTools.send(connection, 'client')
     SocketTools.send(connection, mac_address)
     media_data = SocketTools.receive(connection, timeout=None)[0]
     with open('Media/media.mp4', 'wb+') as media_file:
