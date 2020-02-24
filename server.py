@@ -57,6 +57,11 @@ class ClientThread(threading.Thread):
                     devices = json.load(json_file)
                 SocketTools.send(self.socket, devices)
 
+                while True:
+                    message, message_type = SocketTools.receive(self.socket, timeout=None)
+                    print(message, message_type)
+                    CommandInterpreter.interpret(message, self.socket)
+
         except SocketTools.DisconnectError:
             print('[-] Killing Thread For (%s:%s)' % self.address)
             self.socket.shutdown(2)

@@ -18,15 +18,15 @@ def interpret(command, connection, send=True):
 
         elif command_segments[0] == 'get':
             try:
-                if send:
-                    SocketTools.send(connection, data[command_segments[1]])
-                else:
-                    data[command_segments[1]]
+                SocketTools.send(connection, data[command_segments[1]])
                 return True
             except KeyError:
                 if send:
                     SocketTools.send(connection, 'KeyError')
                 return False
+
+        elif command_segments[0] == 'get_all':
+            SocketTools.send(connection, data)
 
         elif command_segments[0] == 'delete':
             try:
@@ -43,7 +43,6 @@ def interpret(command, connection, send=True):
             try:
                 with open(command_segments[1], 'rb') as file:
                     file_data = file.read()
-                if send:
                     SocketTools.send(connection, file_data)
                 return True
 
@@ -59,6 +58,7 @@ def interpret(command, connection, send=True):
     except IndexError:
         if send:
             SocketTools.send(connection, 'invalid command')
+        print('Invalid Command')
 
 
 def set_data(new_data):

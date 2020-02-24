@@ -9,6 +9,16 @@ import socket
 import json
 import sys
 
+
+'''
+Todo:
+    Get client status and display, preferably with timed updates
+    Have upload file actually upload file
+    More hover tooltips
+    Check the client state
+'''
+
+
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 12345
 
@@ -34,6 +44,18 @@ class Window(QWidget):
         for i in range(len(self.left_checkbox_list)):
             if self.left_checkbox_list[i].isChecked():
                 print(self.left_line_edit_hints[i])
+                print(str(self.left_combo_list[i].currentText()))
+                SocketTools.send(server_socket, 'set %s_should_update True' % self.left_line_edit_hints[i])
+                SocketTools.send(server_socket, 'set %s_media_name %s' % (self.left_line_edit_hints[i], str(self.left_combo_list[i].currentText())))
+
+    def save(self):
+        SocketTools.send(server_socket, 'save')
+        clients = {}
+        for i in range(len(self.left_checkbox_list)):
+            clients[self.left_line_edit_hints[i]] = [self.left_line_edit_list[i].text(), 'offline', '08:00:00 18:00:00']
+        print(clients)
+        with open('devices.json', 'w+') as json_file:
+            json.dump(clients, json_file)
 
     @staticmethod
     def upload_file():
@@ -91,13 +113,16 @@ class Window(QWidget):
 
         update_button = QPushButton('Update')
         upload_button = QPushButton('Upload')
+        save_button = QPushButton('Save')
         update_button.clicked.connect(self.update)
         upload_button.clicked.connect(self.upload_file)
+        save_button.clicked.connect(self.save)
         vertical_spacer = QSpacerItem(40, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)
         sign_label = QLabel('By: Treysen Zobell')
 
         right_vbox_layout.addWidget(update_button, alignment=Qt.AlignTop)
         right_vbox_layout.addWidget(upload_button, alignment=Qt.AlignTop)
+        right_vbox_layout.addWidget(save_button, alignment=Qt.AlignTop)
         right_vbox_layout.addSpacerItem(vertical_spacer)
         right_vbox_layout.addWidget(sign_label, alignment=Qt.AlignBottom)
 

@@ -109,7 +109,7 @@ try:
             time.sleep(30)
 
     except SocketTools.DisconnectError:
-        pass
+        pass  # Replace with reconnect or reboot attempts
 
     SocketTools.disconnect(server_socket)
 
