@@ -12,7 +12,7 @@ import uuid
 import os
 
 
-SERVER_IP = '192.168.1.8'
+SERVER_IP = '127.0.0.1'
 SERVER_PORT = 12345
 
 
@@ -59,6 +59,7 @@ def connect(connection):
         media_file.write(media_data)
     SocketTools.send(connection, 'get %s_timetable' % mac_address)
     cec_timetable = SocketTools.receive(connection)[0]
+    SocketTools.send(connection, 'set %s_online True' % mac_address)
     return cec_timetable
 
 
@@ -67,7 +68,7 @@ def restart_media():
     if system == 'Linux':
         os.system('killall vlc')
         os.system('cp Media/media.mp4.tmp Media/media.mp4')
-        subprocess.Popen(['cvlc', '-f', '--loop', 'Media/media.mp4'])
+        subprocess.Popen(['vlc', '-Idummy', '-f', '--loop', 'Media/media.mp4'])
 
 
 try:

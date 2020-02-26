@@ -53,7 +53,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.gui">
+  <component name="RunManager" selected="Python.client">
     <configuration name="CommandInterpreter" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="DigitalSignage" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -161,11 +161,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.gui" />
+        <item itemvalue="Python.client" />
         <item itemvalue="Python.server" />
+        <item itemvalue="Python.gui" />
         <item itemvalue="Python.CommandInterpreter" />
         <item itemvalue="Python.terminal (1)" />
-        <item itemvalue="Python.client" />
       </list>
     </recent_temporary>
   </component>

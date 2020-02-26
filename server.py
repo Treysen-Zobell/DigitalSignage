@@ -64,6 +64,8 @@ class ClientThread(threading.Thread):
 
         except SocketTools.DisconnectError:
             print('[-] Killing Thread For (%s:%s)' % self.address)
+            CommandInterpreter.interpret('set %s_online False' % self.mac_address, self.socket, send=False)
+            CommandInterpreter.interpret('set %s_should_update True' % self.mac_address, self.socket, send=False)
             self.socket.shutdown(2)
             self.socket.close()
 
